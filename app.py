@@ -547,13 +547,11 @@ async def send_chat_request(request):
     except Exception as e:
         logging.exception("Exception in send_chat_request")
         raise e
-
     return response
 
 async def complete_chat_request(request_body):
     response = await send_chat_request(request_body)
     history_metadata = request_body.get("history_metadata", {})
-
     return format_non_streaming_response(response, history_metadata)
 
 async def stream_chat_request(request_body):
@@ -591,8 +589,9 @@ async def conversation():
     if not request.is_json:
         return jsonify({"error": "request must be json"}), 415
     request_json = await request.get_json()
-    
-    return await conversation_internal(request_json)
+    result = await conversation_internal(request_json)
+    print(result)
+    return result
 
 @bp.route("/frontend_settings", methods=["GET"])  
 def get_frontend_settings():
@@ -961,5 +960,17 @@ async def generate_title(conversation_messages):
     except Exception as e:
         return messages[-2]['content']
 
+
+#TODO incomplete backend - need to connect to CLU and send over requests
+@bp.route("/getCLUResult", methods=["POST"])
+async def getClUResult():
+    if not request.is_json:
+        return jsonify({"error": "request must be json"}), 415
+    request_json = await request.get_json()
+    print(request_json)
+    print(request_json['question'])
+    # result = await conversation_internal(request_json)
+    # print(result)
+    return request_json['question']
 
 app = create_app()

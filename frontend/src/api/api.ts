@@ -339,3 +339,36 @@ export const historyMessageFeedback = async (messageId: string, feedback: string
     })
     return response;
 }
+
+
+//TODO Incomplete middleware to connect python API to frontend
+export const cluPromptToAsk = async (question: string): Promise<Response> => {
+    const response = await fetch("/getCLUResult", {
+        method: "POST",
+        body: JSON.stringify({
+            question: question
+        }),
+        headers: {
+            "Content-Type": "application/json"
+        },
+    })
+    .then((res) => {
+        // debugger
+        const async = res.body
+        console.log(async ? async.getReader().read() : 'nothing')
+
+        console.log('hi')
+        console.log(res)
+        return res
+    })
+    .catch((err) => {
+        console.error("There was an issue logging feedback.");
+        let errRes: Response = {
+            ...new Response,
+            ok: false,
+            status: 500,
+        }
+        return errRes;
+    })
+    return response;
+}
