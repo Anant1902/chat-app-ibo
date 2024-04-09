@@ -118,7 +118,8 @@ AZURE_COSMOSDB_MONGO_VCORE_TITLE_COLUMN = os.environ.get("AZURE_COSMOSDB_MONGO_V
 AZURE_COSMOSDB_MONGO_VCORE_URL_COLUMN = os.environ.get("AZURE_COSMOSDB_MONGO_VCORE_URL_COLUMN")
 AZURE_COSMOSDB_MONGO_VCORE_VECTOR_COLUMNS = os.environ.get("AZURE_COSMOSDB_MONGO_VCORE_VECTOR_COLUMNS")
 
-SHOULD_STREAM = True if AZURE_OPENAI_STREAM.lower() == "true" else False
+# SHOULD_STREAM = True if AZURE_OPENAI_STREAM.lower() == "true" else False
+SHOULD_STREAM = False
 
 # Chat History CosmosDB Integration Settings
 AZURE_COSMOSDB_DATABASE = os.environ.get("AZURE_COSMOSDB_DATABASE")
@@ -960,17 +961,44 @@ async def generate_title(conversation_messages):
     except Exception as e:
         return messages[-2]['content']
 
+async def conversation_clu(request_body):
+    try:
+        result = {'result': 'test_result'}
+        
+        return jsonify(result)
+    except Exception as ex:
+        logging.exception(ex)
+        if hasattr(ex, "status_code"):
+            return jsonify({"error": str(ex)}), ex.status_code
+        else:
+            return jsonify({"error": str(ex)}), 500
 
 #TODO incomplete backend - need to connect to CLU and send over requests
 @bp.route("/getCLUResult", methods=["POST"])
 async def getClUResult():
+    # Check if the request is JSON
     if not request.is_json:
         return jsonify({"error": "request must be json"}), 415
-    request_json = await request.get_json()
-    print(request_json)
-    print(request_json['question'])
-    # result = await conversation_internal(request_json)
-    # print(result)
-    return request_json['question']
+
+    try:
+        # Get JSON data from request
+        request_json = await request.get_data()
+        # conversation_id = request_json.get('conversation_id', None)
+        # Process the data (make sure conversation_clu is an awaitable if it's an async function)
+        # res = await conversation_clu(request_json) # Uncomment and use this if conversation_clu is async.
+        # res = conversation_clu(request_json)  # Use this if conversation_clu is a regular function.
+
+        # Log for debugging
+        print("API Activated")
+        print(request_json)
+
+        # Return a JSON response
+        return jsonify(request_json), 200
+
+    except Exception as e:
+        # Log the exception for debugging
+        print(f"An error occurred: {e}")
+        # Return a JSON error message with a 500 status code
+        return jsonify({"error": "Internal Server Error"}), 500
 
 app = create_app()

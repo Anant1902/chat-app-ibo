@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useContext, useLayoutEffect } from "react";
-import { CommandBarButton, IconButton, Dialog, DialogType, Stack } from "@fluentui/react";
+import { CommandBarButton, IconButton, Dialog, DialogType, Stack, Link } from "@fluentui/react";
 import { SquareRegular, ShieldLockRegular, ErrorCircleRegular } from "@fluentui/react-icons";
 
 import ReactMarkdown from "react-markdown";
@@ -148,8 +148,8 @@ const Chat = () => {
     }
 
     const makeApiRequestWithoutCosmosDB = async (question: string, conversationId?: string) => {
-        cluPromptToAsk(question)
-        setIsLoading(true);
+        // setLatestConversationId(conversationId)
+        // makeCLUApiRequestWithoutCosmosDB("test", conversationId)
         setShowLoadingMessage(true);
         const abortController = new AbortController();
         abortFuncs.current.unshift(abortController);
@@ -237,6 +237,7 @@ const Chat = () => {
                     });
                 }
                 console.log("Assistant Message updated:" ,assistantMessage)
+                console.log(conversation.messages)
                 conversation.messages.push(toolMessage, assistantMessage)
                 appStateContext?.dispatch({ type: 'UPDATE_CURRENT_CHAT', payload: conversation });
                 setMessages([...messages, toolMessage, assistantMessage]);
@@ -272,6 +273,77 @@ const Chat = () => {
 
         return abortController.abort();
     };
+
+    const cluRedirect = () => {
+        console.log("entered cluredirect")
+        const conversation = appStateContext?.state?.currentChat
+        console.log(conversation?.messages[conversation?.messages.length - 3])
+        const userPrompt = conversation ? conversation?.messages[conversation?.messages.length - 3].content : ""
+        makeCLUApiRequestWithoutCosmosDB(userPrompt)
+    }
+
+//TODO incomplete function implementation that is to call python API that will then return CLU response
+    //TODO yet to implement frontend connection too
+    //function params: question: string, conversationId?: string
+    const makeCLUApiRequestWithoutCosmosDB = async (question: string, conversationId?: string) => {
+        console.log("entered function")
+        const response = await cluPromptToAsk(question)
+        setIsLoading(true);
+        setShowLoadingMessage(true);
+        const abortController = new AbortController();
+        abortFuncs.current.unshift(abortController);
+
+        const addressMessage: ChatMessage = {
+            id: uuid(),
+            role: "assistant",
+            content: response,
+            date: new Date().toISOString(),
+        };
+        
+        let conversation: Conversation | null | undefined;
+        try {
+            conversation = appStateContext?.state?.currentChat
+            if (!conversation) {
+                console.error("Conversation not found.");
+                setIsLoading(false);
+                setShowLoadingMessage(false);
+                abortFuncs.current = abortFuncs.current.filter(a => a !== abortController);
+                return;
+            } else {
+                conversation.messages.push(addressMessage);
+            }
+        
+
+            appStateContext?.dispatch({ type: 'UPDATE_CURRENT_CHAT', payload: conversation });
+            setMessages(conversation.messages)           
+//         setMessages([...messages, toolMessage, assistantMessage]);
+        } catch (e) {
+            if (!abortController.signal.aborted) {
+                let errorMessage = "An error occurred. Please try again. If the problem persists, please contact the site administrator.";
+                // if (result.error?.message) {
+                //     errorMessage = result.error.message;
+                // }
+                // else if (typeof result.error === "string") {
+                //     errorMessage = result.error;
+                // }
+                // let errorChatMsg: ChatMessage = {
+                //     id: uuid(),
+                //     role: ERROR,
+                //     content: errorMessage,
+                //     date: new Date().toISOString()
+                // }
+                // // conversation.messages.push(errorChatMsg);
+                // // appStateContext?.dispatch({ type: 'UPDATE_CURRENT_CHAT', payload: conversation });
+                // // setMessages([...messages, errorChatMsg]);
+            } 
+        } finally {
+            setIsLoading(false);
+            setShowLoadingMessage(false);
+            abortFuncs.current = abortFuncs.current.filter(a => a !== abortController);
+            setProcessMessages(messageStatus.Done)
+        }
+        return abortController.abort();
+        };
 
     const makeApiRequestWithCosmosDB = async (question: string, conversationId?: string) => {
         setIsLoading(true);
@@ -309,139 +381,6 @@ const Chat = () => {
             };
             setMessages(request.messages)
         }
-
-
-        //TODO incomplete function implementation that is to call python API that will then return CLU response
-        //TODO yet to implement frontend connection too
-        //function params: question: string, conversationId?: string
-        const makeCLUApiRequestWithoutCosmosDB = async () => {
-            debugger
-            cluPromptToAsk('test question')
-            // setIsLoading(true);
-            // setShowLoadingMessage(true);
-            // const abortController = new AbortController();
-            // abortFuncs.current.unshift(abortController);
-    
-            // const userMessage: ChatMessage = {
-            //     id: uuid(),
-            //     role: "user",
-            //     content: question,
-            //     date: new Date().toISOString(),
-            // };
-    
-            // let conversation: Conversation | null | undefined;
-            // if (!conversationId) {
-            //     conversation = {
-            //         id: conversationId ?? uuid(),
-            //         title: question,
-            //         messages: [userMessage],
-            //         date: new Date().toISOString(),
-            //     }
-            // } else {
-            //     conversation = appStateContext?.state?.currentChat
-            //     if (!conversation) {
-            //         console.error("Conversation not found.");
-            //         setIsLoading(false);
-            //         setShowLoadingMessage(false);
-            //         abortFuncs.current = abortFuncs.current.filter(a => a !== abortController);
-            //         return;
-            //     } else {
-            //         conversation.messages.push(userMessage);
-            //     }
-            // }
-    
-            // appStateContext?.dispatch({ type: 'UPDATE_CURRENT_CHAT', payload: conversation });
-            // setMessages(conversation.messages)
-    
-            // const request: ConversationRequest = {
-            //     messages: [...conversation.messages.filter((answer) => answer.role !== ERROR)]
-            // };
-    
-            // let result = {} as ChatResponse;
-            // try {
-            //     const response = await conversationApi(request, abortController.signal);
-            //     if (response?.body) {
-            //         const reader = response.body.getReader();
-    
-            //         let runningText = "";
-            //         while (true) {
-            //             setProcessMessages(messageStatus.Processing)
-            //             const { done, value } = await reader.read();
-            //             if (done) break;
-    
-            //             var text = new TextDecoder("utf-8").decode(value);
-            //             const objects = text.split("\n");
-            //             objects.forEach((obj) => {
-            //                 try {
-            //                     if (obj !== "" && obj !== "{}") {
-            //                         runningText += obj;
-            //                         result = JSON.parse(runningText);
-            //                         if (result.choices?.length > 0) {
-            //                             result.choices[0].messages.forEach((msg) => {
-            //                                 msg.id = result.id;
-            //                                 msg.date = new Date().toISOString();
-            //                             })
-            //                             if (result.choices[0].messages?.some(m => m.role === ASSISTANT)) {
-            //                                 setShowLoadingMessage(false);
-            //                             }
-            //                             result.choices[0].messages.forEach((resultObj) => {
-            //                                 processResultMessage(resultObj, userMessage, conversationId);
-            //                             })
-            //                         }
-            //                         else if (result.error) {
-            //                             throw Error(result.error);
-            //                         }
-            //                         runningText = "";
-            //                     }
-            //                 }
-            //                 catch (e) {
-            //                     if (!(e instanceof SyntaxError)) {
-            //                         console.error(e);
-            //                         throw e;
-            //                     } else {
-            //                         console.log("Incomplete message. Continuing...")
-            //                     }
-            //                 }
-            //             });
-            //         }
-            //         debugger;
-            //         console.log("Assistant Message updated:" ,assistantMessage)
-            //         conversation.messages.push(toolMessage, assistantMessage)
-            //         appStateContext?.dispatch({ type: 'UPDATE_CURRENT_CHAT', payload: conversation });
-            //         setMessages([...messages, toolMessage, assistantMessage]);
-            //     }
-    
-            // } catch (e) {
-            //     if (!abortController.signal.aborted) {
-            //         let errorMessage = "An error occurred. Please try again. If the problem persists, please contact the site administrator.";
-            //         if (result.error?.message) {
-            //             errorMessage = result.error.message;
-            //         }
-            //         else if (typeof result.error === "string") {
-            //             errorMessage = result.error;
-            //         }
-            //         let errorChatMsg: ChatMessage = {
-            //             id: uuid(),
-            //             role: ERROR,
-            //             content: errorMessage,
-            //             date: new Date().toISOString()
-            //         }
-            //         conversation.messages.push(errorChatMsg);
-            //         appStateContext?.dispatch({ type: 'UPDATE_CURRENT_CHAT', payload: conversation });
-            //         setMessages([...messages, errorChatMsg]);
-            //     } else {
-            //         setMessages([...messages, userMessage])
-            //     }
-            // } finally {
-            //     setIsLoading(false);
-            //     setShowLoadingMessage(false);
-            //     abortFuncs.current = abortFuncs.current.filter(a => a !== abortController);
-            //     setProcessMessages(messageStatus.Done)
-            // }
-    
-            // return abortController.abort();
-        };
-        makeCLUApiRequestWithoutCosmosDB();
 
         let result = {} as ChatResponse;
         try {
@@ -827,6 +766,9 @@ const Chat = () => {
                                         </div>
                                     </>
                                 )}
+                                <Link className={styles.chatMessageGpt} onClick={cluRedirect}>
+                                    Question not answered? Try the QnA instead.
+                                </Link>
                                 <div ref={chatMessageStreamEnd} />
                             </div>
                         )}
