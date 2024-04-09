@@ -999,7 +999,7 @@ async def get_more_info():
                     "id": "1",
                     "modality": "text",
                     "language": "en",
-                    "text": f"{question}"  # Combine prompt and generated text
+                    "text": f"{question}"  # Combine prompt 
                 },
                 "isLoggingEnabled": False
             },
