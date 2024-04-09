@@ -22,6 +22,9 @@ from backend.history.cosmosdbservice import CosmosConversationClient
 
 from backend.utils import format_as_ndjson, format_stream_response, generateFilterString, parse_multi_columns, format_non_streaming_response
 
+from azure.core.credentials import AzureKeyCredential
+from azure.ai.language.conversations import ConversationAnalysisClient
+
 bp = Blueprint("routes", __name__, static_folder="static", template_folder="static")
 
 # Current minimum Azure OpenAI version supported
@@ -972,5 +975,42 @@ async def getClUResult():
     # result = await conversation_internal(request_json)
     # print(result)
     return request_json['question']
+
+@bp.route("/more_info", methods=["GET"])
+async def get_more_info():
+    question = request.args.get("question")
+    if not question:
+        return jsonify({"error": "Question is required"}), 400
+
+    # Set up authentication with Azure CLU
+    clu_endpoint = "https://prc-language-testing-eastus2.cognitiveservices.azure.com/"
+    clu_key = "630c730db8f44938b047005c6d48fb36"
+    project_name = "orchestration4ibodatateam"
+    deployment_name = "deploy1"
+    clu_client = ConversationAnalysisClient(clu_endpoint, AzureKeyCredential(clu_key))
+
+    # Pass the generated text and prompt to the orchestrator
+    orchestration_result = clu_client.analyze_conversation(
+        task={
+            "kind": "Conversation",
+            "analysisInput": {
+                "conversationItem": {
+                    "participantId": "1",
+                    "id": "1",
+                    "modality": "text",
+                    "language": "en",
+                    "text": f"{question}"  # Combine prompt and generated text
+                },
+                "isLoggingEnabled": False
+            },
+            "parameters": {
+                "projectName": project_name,
+                "deploymentName": deployment_name,
+                "verbose": True
+            }
+        }
+    )
+    
+    return jsonify({"detailed_answer": orchestration_result})
 
 app = create_app()
