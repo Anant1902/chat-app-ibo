@@ -1,49 +1,26 @@
 {
   "version": "0.2.0",
   "configurations": [
-    {
-      "name": "Python: Current File",
-      "type": "python",
-      "request": "launch",
-      "program": "${file}",
-      "console": "integratedTerminal",
-      "justMyCode": true
-    },
-    {
-      "name": "Python: Current File",
-      "type": "python",
-      "request": "launch",
-      "program": "${file}",
-      "console": "integratedTerminal",
-      "justMyCode": true
-    },
-    {
-      "name": "Python: Current File",
-      "type": "python",
-      "request": "launch",
-      "program": "${file}",
-      "console": "integratedTerminal",
-      "justMyCode": true
-    },
+    
     {
       "name": "Python: Sample App Backend",
-      "type": "python",
+      "type": "debugpy",
       "request": "launch",
       "module": "quart",
       "cwd": "${workspaceFolder}",
       "env": {
-        "QUART_APP": "app:app",
-        "QUART_ENV": "development",
-        "QUART_DEBUG": "0"
+          "QUART_APP": "app:app",
+          "QUART_ENV": "development",
+          "QUART_DEBUG": "1"
       },
       "args": [
-        "run",
-        "--no-reload",
-        "-p 50505"
+          "run",
+          "--no-reload",
+          "-p 50505"
       ],
       "console": "integratedTerminal",
       "justMyCode": false,
       "envFile": "${workspaceFolder}/.env",
-    }
+  }
   ]
 }

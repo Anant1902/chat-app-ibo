@@ -344,6 +344,7 @@ export const historyMessageFeedback = async (messageId: string, feedback: string
 //TODO Incomplete middleware to connect python API to frontend
 export const cluPromptToAsk = async (question: string): Promise<any> => { // Changed from Response to any to accommodate for parsed JSON
     try {
+        return question
         const response = await fetch("/getCLUResult", {
             method: "POST",
             body: JSON.stringify({
@@ -352,8 +353,9 @@ export const cluPromptToAsk = async (question: string): Promise<any> => { // Cha
             headers: {
                 "Content-Type": "application/json"
             },
-        }).then((res) => {
-            console.log("INSIDE CLUPROMPTTOASK MIDDLEWARE")
+        }).then(async (res) => {
+            console.log("INSIDE CLUPROMPTTO ASK MIDDLEWARE")
+            console.log(res)
             return res
             })
             

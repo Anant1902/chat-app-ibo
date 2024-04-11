@@ -18,11 +18,13 @@ import { XSSAllowTags } from "../../constants/xssAllowTags";
 interface Props {
     answer: AskResponse;
     onCitationClicked: (citedDocument: Citation) => void;
+    context: String | null;
 }
 
 export const Answer = ({
     answer,
-    onCitationClicked
+    onCitationClicked,
+    context
 }: Props) => {
     const initializeAnswerFeedback = (answer: AskResponse) => {
         if (answer.message_id == undefined) return undefined;
@@ -180,7 +182,7 @@ export const Answer = ({
 
     return (
         <>
-            <Stack className={styles.answerContainer} tabIndex={0}>
+            <Stack className={context ? styles.answerContainerQnA : styles.answerContainer} tabIndex={0}>
                 
                 <Stack.Item>
                     <Stack horizontal grow>
@@ -240,7 +242,8 @@ export const Answer = ({
                     </Stack.Item>
                 )}
                 <Stack.Item className={styles.answerDisclaimerContainer}>
-                    <span className={styles.answerDisclaimer}>AI-generated content may be incorrect</span>
+                {!context ? <span className={styles.answerDisclaimer}>AI-generated content may be incorrect</span>
+                        : <span className={styles.answerDisclaimer}>Response generated from QnA</span>}
                 </Stack.Item>
                 </Stack>
                 {chevronIsExpanded && 

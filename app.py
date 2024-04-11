@@ -22,8 +22,8 @@ from backend.history.cosmosdbservice import CosmosConversationClient
 
 from backend.utils import format_as_ndjson, format_stream_response, generateFilterString, parse_multi_columns, format_non_streaming_response
 
-from azure.core.credentials import AzureKeyCredential
-from azure.ai.language.conversations import ConversationAnalysisClient
+# from azure.core.credentials import AzureKeyCredential
+# from azure.ai.language.conversations import ConversationAnalysisClient
 
 bp = Blueprint("routes", __name__, static_folder="static", template_folder="static")
 
@@ -985,7 +985,7 @@ async def getClUResult():
 
     try:
         # Get JSON data from request
-        request_json = await request.get_data()
+        # request_json = await request.get_data()
         # conversation_id = request_json.get('conversation_id', None)
         # Process the data (make sure conversation_clu is an awaitable if it's an async function)
         # res = await conversation_clu(request_json) # Uncomment and use this if conversation_clu is async.
@@ -993,10 +993,10 @@ async def getClUResult():
 
         # Log for debugging
         print("API Activated")
-        print(request_json)
+        # print(request_json)
 
         # Return a JSON response
-        return jsonify(request_json), 200
+        return jsonify({"response": "success"}), 200
 
     except Exception as e:
         # Log the exception for debugging
@@ -1004,41 +1004,41 @@ async def getClUResult():
         # Return a JSON error message with a 500 status code
         return jsonify({"error": "Internal Server Error"}), 500
 
-@bp.route("/more_info", methods=["GET"])
-async def get_more_info():
-    question = request.args.get("question")
-    if not question:
-        return jsonify({"error": "Question is required"}), 400
+# @bp.route("/more_info", methods=["GET"])
+# async def get_more_info():
+#     question = request.args.get("question")
+#     if not question:
+#         return jsonify({"error": "Question is required"}), 400
 
-    # Set up authentication with Azure CLU
-    clu_endpoint = "https://prc-language-testing-eastus2.cognitiveservices.azure.com/"
-    clu_key = "630c730db8f44938b047005c6d48fb36"
-    project_name = "orchestration4ibodatateam"
-    deployment_name = "deploy1"
-    clu_client = ConversationAnalysisClient(clu_endpoint, AzureKeyCredential(clu_key))
+#     # Set up authentication with Azure CLU
+#     clu_endpoint = "https://prc-language-testing-eastus2.cognitiveservices.azure.com/"
+#     clu_key = "630c730db8f44938b047005c6d48fb36"
+#     project_name = "orchestration4ibodatateam"
+#     deployment_name = "deploy1"
+#     clu_client = ConversationAnalysisClient(clu_endpoint, AzureKeyCredential(clu_key))
 
-    # Pass the generated text and prompt to the orchestrator
-    orchestration_result = clu_client.analyze_conversation(
-        task={
-            "kind": "Conversation",
-            "analysisInput": {
-                "conversationItem": {
-                    "participantId": "1",
-                    "id": "1",
-                    "modality": "text",
-                    "language": "en",
-                    "text": f"{question}"  # Combine prompt 
-                },
-                "isLoggingEnabled": False
-            },
-            "parameters": {
-                "projectName": project_name,
-                "deploymentName": deployment_name,
-                "verbose": True
-            }
-        }
-    )
+#     # Pass the generated text and prompt to the orchestrator
+#     orchestration_result = clu_client.analyze_conversation(
+#         task={
+#             "kind": "Conversation",
+#             "analysisInput": {
+#                 "conversationItem": {
+#                     "participantId": "1",
+#                     "id": "1",
+#                     "modality": "text",
+#                     "language": "en",
+#                     "text": f"{question}"  # Combine prompt 
+#                 },
+#                 "isLoggingEnabled": False
+#             },
+#             "parameters": {
+#                 "projectName": project_name,
+#                 "deploymentName": deployment_name,
+#                 "verbose": True
+#             }
+#         }
+#     )
     
-    return jsonify({"detailed_answer": orchestration_result})
+#     return jsonify({"detailed_answer": orchestration_result})
 
 app = create_app()

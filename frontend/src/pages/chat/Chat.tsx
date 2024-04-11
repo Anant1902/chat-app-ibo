@@ -298,6 +298,7 @@ const Chat = () => {
             role: "assistant",
             content: response,
             date: new Date().toISOString(),
+            context: 'QnA'
         };
         
         let conversation: Conversation | null | undefined;
@@ -733,7 +734,8 @@ const Chat = () => {
                                                 <div className={styles.chatMessageUserMessage}>{answer.content}</div>
                                             </div>
                                         ) : (
-                                            answer.role === "assistant" ? <div className={styles.chatMessageGpt}>
+                                            answer.role === "assistant" ? answer.context === "QnA" ? 
+                                            <div className={styles.chatMessageGpt}>
                                                 <Answer
                                                     answer={{
                                                         answer: answer.content,
@@ -742,8 +744,20 @@ const Chat = () => {
                                                         feedback: answer.feedback
                                                     }}
                                                     onCitationClicked={c => onShowCitation(c)}
+                                                    context="QnA"
                                                 />
-                                            </div> : answer.role === ERROR ? <div className={styles.chatMessageError}>
+                                            </div> 
+                                            : <Answer
+                                            answer={{
+                                                answer: answer.content,
+                                                citations: parseCitationFromMessage(messages[index - 1]),
+                                                message_id: answer.id,
+                                                feedback: answer.feedback
+                                            }}
+                                            onCitationClicked={c => onShowCitation(c)}
+                                            context={null}
+                                            />
+                                            : answer.role === ERROR ? <div className={styles.chatMessageError}>
                                                 <Stack horizontal className={styles.chatMessageErrorContent}>
                                                     <ErrorCircleRegular className={styles.errorIcon} style={{ color: "rgba(182, 52, 67, 1)" }} />
                                                     <span>Error</span>
@@ -762,6 +776,7 @@ const Chat = () => {
                                                     citations: []
                                                 }}
                                                 onCitationClicked={() => null}
+                                                context={null}
                                             />
                                         </div>
                                     </>
