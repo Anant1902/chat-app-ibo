@@ -781,9 +781,11 @@ const Chat = () => {
                                         </div>
                                     </>
                                 )}
-                                <Link className={styles.chatMessageGpt} onClick={cluRedirect}>
+                                <div>
+                                <Link onClick={cluRedirect} className={styles.chatMessageGptLink}>
                                     Question not answered? Try the QnA instead.
                                 </Link>
+                                </div>
                                 <div ref={chatMessageStreamEnd} />
                             </div>
                         )}

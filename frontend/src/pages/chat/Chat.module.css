@@ -82,6 +82,11 @@
     margin-bottom: 12px;
 }
 
+.chatMessageGptLink {
+    justify-content: flex-end;
+    margin-bottom: 12px;
+}
+
 .chatMessageUserMessage {
     display: flex;
     padding: 20px;
