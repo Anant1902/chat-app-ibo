@@ -10,7 +10,7 @@ import { isEmpty } from "lodash-es";
 import DOMPurify from 'dompurify';
 
 import styles from "./Chat.module.css";
-import Contoso from "../../assets/Contoso.svg";
+import ib_logo from "../../assets/IB.svg";
 import { XSSAllowTags } from "../../constants/xssAllowTags";
 
 import {
@@ -718,9 +718,10 @@ const Chat = () => {
                         {!messages || messages.length < 1 ? (
                             <Stack className={styles.chatEmptyState}>
                                 <img
-                                    src={ui?.chat_logo ? ui.chat_logo : Contoso}
+                                    src={ui?.chat_logo ? ui.chat_logo : ib_logo}
                                     className={styles.chatIcon}
                                     aria-hidden="true"
+                                    width={600}
                                 />
                                 <h1 className={styles.chatEmptyStateTitle}>{ui?.chat_title}</h1>
                                 <h2 className={styles.chatEmptyStateSubtitle}>{ui?.chat_description}</h2>
