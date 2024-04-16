@@ -747,16 +747,18 @@ const Chat = () => {
                                                     context="QnA"
                                                 />
                                             </div> 
-                                            : <Answer
-                                            answer={{
-                                                answer: answer.content,
-                                                citations: parseCitationFromMessage(messages[index - 1]),
-                                                message_id: answer.id,
-                                                feedback: answer.feedback
-                                            }}
-                                            onCitationClicked={c => onShowCitation(c)}
-                                            context={null}
-                                            />
+                                            : <div className={styles.chatMessageGpt}>
+                                                <Answer
+                                                    answer={{
+                                                        answer: answer.content,
+                                                        citations: parseCitationFromMessage(messages[index - 1]),
+                                                        message_id: answer.id,
+                                                        feedback: answer.feedback
+                                                    }}
+                                                onCitationClicked={c => onShowCitation(c)}
+                                                context={null}
+                                                />
+                                            </div>
                                             : answer.role === ERROR ? <div className={styles.chatMessageError}>
                                                 <Stack horizontal className={styles.chatMessageErrorContent}>
                                                     <ErrorCircleRegular className={styles.errorIcon} style={{ color: "rgba(182, 52, 67, 1)" }} />
