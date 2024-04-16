@@ -22,8 +22,8 @@ from backend.history.cosmosdbservice import CosmosConversationClient
 
 from backend.utils import format_as_ndjson, format_stream_response, generateFilterString, parse_multi_columns, format_non_streaming_response
 
-# from azure.core.credentials import AzureKeyCredential
-# from azure.ai.language.conversations import ConversationAnalysisClient
+from azure.core.credentials import AzureKeyCredential
+from azure.ai.language.conversations import ConversationAnalysisClient
 
 bp = Blueprint("routes", __name__, static_folder="static", template_folder="static")
 
@@ -976,33 +976,115 @@ async def conversation_clu(request_body):
         else:
             return jsonify({"error": str(ex)}), 500
 
-#TODO incomplete backend - need to connect to CLU and send over requests
-@bp.route("/getCLUResult", methods=["POST"])
-async def getClUResult():
-    # Check if the request is JSON
-    if not request.is_json:
-        return jsonify({"error": "request must be json"}), 415
+# #TODO incomplete backend - need to connect to CLU and send over requests
+# @bp.route("/getCLUResult", methods=["POST"])
+# async def getClUResult():
+#     # Check if the request is JSON
+#     if not request.is_json:
+#         return jsonify({"error": "request must be json"}), 415
 
+#     try:
+#         # Get JSON data from request
+#         # request_json = await request.get_data()
+#         # conversation_id = request_json.get('conversation_id', None)
+#         # Process the data (make sure conversation_clu is an awaitable if it's an async function)
+#         # res = await conversation_clu(request_json) # Uncomment and use this if conversation_clu is async.
+#         # res = conversation_clu(request_json)  # Use this if conversation_clu is a regular function.
+
+#         # Log for debugging
+#         print("API Activated")
+#         # print(request_json)
+
+#         # Return a JSON response
+#         return jsonify({"response": "success"}), 200
+
+#     except Exception as e:
+#         # Log the exception for debugging
+#         print(f"An error occurred: {e}")
+#         # Return a JSON error message with a 500 status code
+#         return jsonify({"error": "Internal Server Error"}), 500
+    
+import traceback
+@bp.route("/more_info", methods=["POST"])
+async def get_more_info():
     try:
-        # Get JSON data from request
-        # request_json = await request.get_data()
-        # conversation_id = request_json.get('conversation_id', None)
-        # Process the data (make sure conversation_clu is an awaitable if it's an async function)
-        # res = await conversation_clu(request_json) # Uncomment and use this if conversation_clu is async.
-        # res = conversation_clu(request_json)  # Use this if conversation_clu is a regular function.
+        content = await request.json
+        question = content.get("question")
+        if not question:
+            return jsonify({"error": "Question is required"}), 400
 
-        # Log for debugging
-        print("API Activated")
-        # print(request_json)
+        # Set up authentication with Azure CLU
+        clu_endpoint = "https://prc-language-testing-eastus2.cognitiveservices.azure.com/"
+        clu_key = "630c730db8f44938b047005c6d48fb36"
+        project_name = "orchestration4ibodatateam"
+        deployment_name = "deploy1"
+        clu_client = ConversationAnalysisClient(clu_endpoint, AzureKeyCredential(clu_key))
 
-        # Return a JSON response
-        return jsonify({"response": "success"}), 200
+        # Pass the generated text and prompt to the orchestrator
+        orchestration_result = clu_client.analyze_conversation(
+            task={
+                "kind": "Conversation",
+                "analysisInput": {
+                    "conversationItem": {
+                        "participantId": "1",
+                        "id": "1",
+                        "modality": "text",
+                        "language": "en",
+                        "text": f"{question}"  # Combine prompt and generated text
+                    },
+                    "isLoggingEnabled": False
+                },
+                "parameters": {
+                    "projectName": project_name,
+                    "deploymentName": deployment_name,
+                    "verbose": True
+                }
+            }
+        )
+        
+        print("Orchestration Result:", orchestration_result)  # Debugging line
 
+        # Extract the top intent from IBOLUIS
+        iboluis_prediction = orchestration_result["result"]["prediction"]
+        top_iboluis_intent = iboluis_prediction["topIntent"]
+        
+        # Extract the answer from IBOQNA with a confidence score >= 0.5 if "intents" exists
+        intents = orchestration_result["result"].get("intents", {})
+        iboqna_prediction = intents.get("IBOQNA", {})
+        iboqna_confidence_score = iboqna_prediction.get("confidenceScore", 0)
+        iboqna_answers = iboqna_prediction.get("result", {}).get("answers", [])
+        
+        # Determine the final answer
+        if "intents" in orchestration_result["result"]["prediction"]:
+            iboqna_prediction = orchestration_result["result"]["prediction"]["intents"].get("IBOQNA", {})
+            # Now you can proceed to access the relevant data from iboqna_prediction
+            if iboqna_prediction:
+                final_answer = iboqna_prediction.get("result", {}).get("answers", [])
+                if final_answer:
+                    final_answer = final_answer[0]["answer"]
+                    print("Final Answer:", final_answer)
+                else:
+                    # If 'IBOQNA' intent exists but has no answers, return top intent from 'IBOLUIS'
+                    iboluis_prediction = orchestration_result["result"]["prediction"]["intents"].get("IBOLUIS", {})
+                    if iboluis_prediction:
+                        top_intent = iboluis_prediction["result"]["prediction"]["topIntent"]
+                        final_answer = top_intent
+                        print("Final Answer:", final_answer)
+        else:
+            print("Intents key not found in orchestration_result")
+
+
+        # Prepare the response
+        response = {
+            "question": question,
+            "final_answer": final_answer
+        }
+
+        return jsonify(response)
     except Exception as e:
-        # Log the exception for debugging
-        print(f"An error occurred: {e}")
-        # Return a JSON error message with a 500 status code
+        traceback.print_exc()
         return jsonify({"error": "Internal Server Error"}), 500
+
 
 # @bp.route("/more_info", methods=["GET"])
 # async def get_more_info():
