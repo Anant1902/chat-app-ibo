@@ -1008,6 +1008,7 @@ import traceback
 
 import dotenv
 import openai
+import re
 
 dotenv.load_dotenv()
 
@@ -1047,7 +1048,10 @@ def get_chat_completion(query):
     if completion.choices:
         for choice in completion.choices:
             if choice.message and choice.message.content:
-                return choice.message.content.strip()
+                answer = choice.message.content.strip()
+                # Remove all occurrences of [docX] using regular expression
+                answer = re.sub(r'\[doc\d+\]', '', answer)
+                return answer
 
     return "The requested information is not available. Please try another query."
 
