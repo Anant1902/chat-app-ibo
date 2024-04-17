@@ -316,7 +316,9 @@ const Chat = () => {
         
 
             appStateContext?.dispatch({ type: 'UPDATE_CURRENT_CHAT', payload: conversation });
-            setMessages(conversation.messages)           
+            setMessages(conversation.messages)       
+            
+            
 //         setMessages([...messages, toolMessage, assistantMessage]);
         } catch (e) {
             if (!abortController.signal.aborted) {
