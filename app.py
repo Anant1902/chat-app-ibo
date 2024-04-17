@@ -1005,6 +1005,52 @@ async def conversation_clu(request_body):
 #         return jsonify({"error": "Internal Server Error"}), 500
     
 import traceback
+
+import dotenv
+import openai
+
+dotenv.load_dotenv()
+
+def get_chat_completion(query):
+    endpoint = "https://openai4ibodatateam.openai.azure.com/"
+    api_key = "a9e9bcfd54304e4685294177a53cc964"
+    deployment = "testDeploy"
+
+    client = openai.AzureOpenAI(
+        base_url=f"{endpoint}/openai/deployments/{deployment}/extensions",
+        api_key=api_key,
+        api_version="2023-08-01-preview",
+    )
+
+    completion = client.chat.completions.create(
+        model=deployment,
+        messages=[
+            {
+                "role": "user",
+                "content": query,
+            },
+        ],
+        extra_body={
+            "dataSources": [
+                {
+                    "type": "AzureCognitiveSearch",
+                    "parameters": {
+                        "endpoint": "https://search4ibodatateam.search.windows.net",
+                        "key": "upLPmJFghbmP4lSMYbyrLqadjgEJCHlqNBAyaQ2rFvAzSeAqblK2",
+                        "indexName": "questionanswering4prc"
+                    }
+                }
+            ]
+        }
+    )
+
+    if completion.choices:
+        for choice in completion.choices:
+            if choice.message and choice.message.content:
+                return choice.message.content.strip()
+
+    return "The requested information is not available. Please try another query."
+
 @bp.route("/more_info", methods=["POST"])
 async def get_more_info():
     try:
@@ -1051,25 +1097,25 @@ async def get_more_info():
         # Extract the answer from IBOQNA with a confidence score >= 0.5 if "intents" exists
         intents = orchestration_result["result"].get("intents", {})
         iboqna_prediction = intents.get("IBOQNA", {})
-        iboqna_confidence_score = iboqna_prediction.get("confidenceScore", 0)
+        
         iboqna_answers = iboqna_prediction.get("result", {}).get("answers", [])
         
         # Determine the final answer
         if "intents" in orchestration_result["result"]["prediction"]:
-            iboqna_prediction = orchestration_result["result"]["prediction"]["intents"].get("IBOQNA", {})
+            iboqna_confidence_score = orchestration_result["result"]["prediction"]["intents"]["IBOQNA"]["confidenceScore"]
             # Now you can proceed to access the relevant data from iboqna_prediction
-            if iboqna_prediction:
-                final_answer = iboqna_prediction.get("result", {}).get("answers", [])
-                if final_answer:
-                    final_answer = final_answer[0]["answer"]
-                    print("Final Answer:", final_answer)
-                else:
+            if iboqna_confidence_score >= 0.5:
+                # If confidence score is above the threshold, use get_chat_completion
+                print(iboqna_confidence_score)
+                final_answer = get_chat_completion(question)
+                print("Final Answer:", final_answer)
+            else:
                     # If 'IBOQNA' intent exists but has no answers, return top intent from 'IBOLUIS'
-                    iboluis_prediction = orchestration_result["result"]["prediction"]["intents"].get("IBOLUIS", {})
-                    if iboluis_prediction:
-                        top_intent = iboluis_prediction["result"]["prediction"]["topIntent"]
-                        final_answer = top_intent
-                        print("Final Answer:", final_answer)
+                iboluis_prediction = orchestration_result["result"]["prediction"]["intents"].get("IBOLUIS", {})
+                if iboluis_prediction:
+                    top_intent = iboluis_prediction["result"]["prediction"]["topIntent"]
+                    final_answer = top_intent
+                    print("Final Answer:", final_answer)
         else:
             print("Intents key not found in orchestration_result")
 
@@ -1084,43 +1130,5 @@ async def get_more_info():
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": "Internal Server Error"}), 500
-
-
-# @bp.route("/more_info", methods=["GET"])
-# async def get_more_info():
-#     question = request.args.get("question")
-#     if not question:
-#         return jsonify({"error": "Question is required"}), 400
-
-#     # Set up authentication with Azure CLU
-#     clu_endpoint = "https://prc-language-testing-eastus2.cognitiveservices.azure.com/"
-#     clu_key = "630c730db8f44938b047005c6d48fb36"
-#     project_name = "orchestration4ibodatateam"
-#     deployment_name = "deploy1"
-#     clu_client = ConversationAnalysisClient(clu_endpoint, AzureKeyCredential(clu_key))
-
-#     # Pass the generated text and prompt to the orchestrator
-#     orchestration_result = clu_client.analyze_conversation(
-#         task={
-#             "kind": "Conversation",
-#             "analysisInput": {
-#                 "conversationItem": {
-#                     "participantId": "1",
-#                     "id": "1",
-#                     "modality": "text",
-#                     "language": "en",
-#                     "text": f"{question}"  # Combine prompt 
-#                 },
-#                 "isLoggingEnabled": False
-#             },
-#             "parameters": {
-#                 "projectName": project_name,
-#                 "deploymentName": deployment_name,
-#                 "verbose": True
-#             }
-#         }
-#     )
-    
-#     return jsonify({"detailed_answer": orchestration_result})
 
 app = create_app()
