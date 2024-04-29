@@ -87,6 +87,16 @@
     margin-bottom: 12px;
 }
 
+.chatDropdown {
+    font-family: inherit;
+    font-size: 16px; /* Increased font size */
+    background-color: #b1dbff;
+    border-radius: 6px;
+    border-width: 8px;
+    border-color: #b1dbff;
+    margin: 10px;
+}
+
 .chatMessageUserMessage {
     display: flex;
     padding: 20px;
@@ -103,6 +113,8 @@
     white-space: pre-wrap;
     word-wrap: break-word;
     max-width: 80%;
+    position: relative; /* Needed to position dropdown inside */
+    padding-bottom: 20px; /* Increase padding to accommodate dropdown */
 }
 
 .chatMessageGpt {

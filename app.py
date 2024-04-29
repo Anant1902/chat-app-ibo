@@ -1106,6 +1106,7 @@ async def get_more_info():
         
         # Determine the final answer
         if "intents" in orchestration_result["result"]["prediction"]:
+
             iboqna_confidence_score = orchestration_result["result"]["prediction"]["intents"]["IBOQNA"]["confidenceScore"]
             # Now you can proceed to access the relevant data from iboqna_prediction
             if iboqna_confidence_score >= 0.5:
@@ -1113,13 +1114,16 @@ async def get_more_info():
                 print(iboqna_confidence_score)
                 final_answer = get_chat_completion(question)
                 print("Final Answer:", final_answer)
-            else:
+            elif orchestration_result["result"]:
                     # If 'IBOQNA' intent exists but has no answers, return top intent from 'IBOLUIS'
                 iboluis_prediction = orchestration_result["result"]["prediction"]["intents"].get("IBOLUIS", {})
                 if iboluis_prediction:
-                    top_intent = iboluis_prediction["result"]["prediction"]["topIntent"]
-                    final_answer = top_intent
-                    print("Final Answer:", final_answer)
+                    if "result" in iboluis_prediction:
+                        top_intent = iboluis_prediction["result"]["prediction"]["topIntent"]
+                        final_answer = top_intent
+                        print("Final Answer:", final_answer)
+                    else:
+                        final_answer = "Sorry, QnA could not answer this question!"
         else:
             print("Intents key not found in orchestration_result")
 

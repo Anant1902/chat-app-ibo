@@ -10,7 +10,7 @@ import { isEmpty } from "lodash-es";
 import DOMPurify from 'dompurify';
 
 import styles from "./Chat.module.css";
-import ib_logo from "../../assets/IB.svg";
+import ib_logo from "../../assets/ib_logo.png";
 import { XSSAllowTags } from "../../constants/xssAllowTags";
 
 import {
@@ -58,6 +58,16 @@ const Chat = () => {
     const [clearingChat, setClearingChat] = useState<boolean>(false);
     const [hideErrorDialog, { toggle: toggleErrorDialog }] = useBoolean(true);
     const [errorMsg, setErrorMsg] = useState<ErrorMessage | null>()
+    const [programme, setProgramme] = useState<string>('');
+    const [session, setSession] = useState<string>('');
+
+    const handleProgrammeChange = (event: any) => {
+        setProgramme(event.target.value);
+      };
+    
+      const handleSessionChange = (event: any) => {
+        setSession(event.target.value);
+      };
 
     const errorDialogContentProps = {
         type: DialogType.close,
@@ -148,11 +158,18 @@ const Chat = () => {
     }
 
     const makeApiRequestWithoutCosmosDB = async (question: string, conversationId?: string) => {
-        // setLatestConversationId(conversationId)
-        // makeCLUApiRequestWithoutCosmosDB("test", conversationId)
         setShowLoadingMessage(true);
         const abortController = new AbortController();
         abortFuncs.current.unshift(abortController);
+        
+        const questionWithContext = (!programme && !session)
+        ? question
+        : `${question}
+
+        Context for this question:
+        IB Programme: ${programme}
+        IB Session: ${session}
+        `;
 
         const userMessage: ChatMessage = {
             id: uuid(),
@@ -161,7 +178,15 @@ const Chat = () => {
             date: new Date().toISOString(),
         };
 
+        const userMessageWithContext: ChatMessage = {
+            id: uuid(),
+            role: "user",
+            content: questionWithContext,
+            date: new Date().toISOString(),
+        };
+
         let conversation: Conversation | null | undefined;
+        let conversationWithContext: Conversation | null | undefined;
         if (!conversationId) {
             conversation = {
                 id: conversationId ?? uuid(),
@@ -169,9 +194,16 @@ const Chat = () => {
                 messages: [userMessage],
                 date: new Date().toISOString(),
             }
+            conversationWithContext = {
+                id: conversationId ?? uuid(),
+                title: question,
+                messages: [userMessageWithContext],
+                date: new Date().toISOString(),
+            }
         } else {
             conversation = appStateContext?.state?.currentChat
-            if (!conversation) {
+            conversationWithContext = appStateContext?.state?.currentChat
+            if (!conversation || !conversationWithContext) {
                 console.error("Conversation not found.");
                 setIsLoading(false);
                 setShowLoadingMessage(false);
@@ -184,9 +216,12 @@ const Chat = () => {
 
         appStateContext?.dispatch({ type: 'UPDATE_CURRENT_CHAT', payload: conversation });
         setMessages(conversation.messages)
-
+        const updatedConversationMessages = [...conversation.messages];
+        updatedConversationMessages.pop()
+        updatedConversationMessages.push(userMessageWithContext)
+        console.log("WRIGWGWRIGI: ", ...updatedConversationMessages);
         const request: ConversationRequest = {
-            messages: [...conversation.messages.filter((answer) => answer.role !== ERROR)]
+            messages: [...updatedConversationMessages.filter((answer) => answer.role !== ERROR)]
         };
 
         let result = {} as ChatResponse;
@@ -277,8 +312,10 @@ const Chat = () => {
     const cluRedirect = () => {
         console.log("entered cluredirect")
         const conversation = appStateContext?.state?.currentChat
-        console.log(conversation?.messages[conversation?.messages.length - 3])
-        const userPrompt = conversation ? conversation?.messages[conversation?.messages.length - 3].content : ""
+        const userConversations = conversation?.messages.filter((mess) => mess.role === 'user')
+        console.log(userConversations)
+        const userPrompt = userConversations ? userConversations[userConversations.length - 1].content : ""
+        console.log(userPrompt)
         makeCLUApiRequestWithoutCosmosDB(userPrompt)
     }
 
@@ -716,6 +753,24 @@ const Chat = () => {
                 </Stack>
             ) : (
                 <Stack horizontal className={styles.chatRoot}>
+                <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: "flex-start"
+                        }}>
+                    <select className={styles.chatDropdown} value={programme} onChange={handleProgrammeChange}>
+                    <option value="">Select a programme</option>
+                    <option value="CP">CP</option>
+                    <option value="DP">DP</option>
+                    <option value="MYP">MYP</option>
+                    <option value="PYP">PYP</option>
+                    </select>
+                    <select className={styles.chatDropdown} value={session} onChange={handleSessionChange}>
+                        <option value="">Select a Session</option>
+                        <option value="May">May</option>
+                        <option value="November">November</option>
+                    </select>
+                    </div>
                     <div className={styles.chatContainer}>
                         {!messages || messages.length < 1 ? (
                             <Stack className={styles.chatEmptyState}>
@@ -734,7 +789,15 @@ const Chat = () => {
                                     <>
                                         {answer.role === "user" ? (
                                             <div className={styles.chatMessageUser} tabIndex={0}>
-                                                <div className={styles.chatMessageUserMessage}>{answer.content}</div>
+                                                <div className={styles.chatMessageUserMessage}>
+                                                <div style={{
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    alignItems: 'flex-end', // This aligns items to the start of the flex container
+                                                }}>
+                                                {answer.content}
+                                                </div>
+                                                </div>
                                             </div>
                                         ) : (
                                             answer.role === "assistant" ? answer.context === "QnA" ? 
@@ -794,7 +857,7 @@ const Chat = () => {
                                 <div ref={chatMessageStreamEnd} />
                             </div>
                         )}
-
+                        
                         <Stack horizontal className={styles.chatInput}>
                             {isLoading && (
                                 <Stack

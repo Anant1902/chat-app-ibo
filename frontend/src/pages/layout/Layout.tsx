@@ -1,6 +1,6 @@
 import { Outlet, Link } from "react-router-dom";
 import styles from "./Layout.module.css";
-import ib_logo from "../../assets/IB.svg";
+import ib_logo from "../../assets/ib_logo.png";
 import { CopyRegular } from "@fluentui/react-icons";
 import { Dialog, Stack, TextField } from "@fluentui/react";
 import { useContext, useEffect, useState } from "react";
