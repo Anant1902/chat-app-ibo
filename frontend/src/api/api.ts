@@ -360,7 +360,7 @@ export const cluPromptToAsk = async (question: string): Promise<string> => {
         const data = await response.json();
 
         // Construct the string using the question and number of words
-        const resultString = `Question: ${data.question}\n\nFinal Answer: ${data.final_answer}`;
+        const resultString = `Question: ${data.question}\n\nResponse: ${data.final_answer}`;
 
         return resultString;
     } catch (e) {
@@ -369,76 +369,3 @@ export const cluPromptToAsk = async (question: string): Promise<string> => {
         return "There was an issue processing the question.";
     }
 };
-
-// //TODO Incomplete middleware to connect python API to frontend
-// export const cluPromptToAsk = async (question: string): Promise<any> => { // Changed from Response to any to accommodate for parsed JSON
-//     try {
-//         return question
-//         const response = await fetch("/getCLUResult", {
-//             method: "POST",
-//             body: JSON.stringify({
-//                 question: question
-//             }),
-//             headers: {
-//                 "Content-Type": "application/json"
-//             },
-//         }).then(async (res) => {
-//             console.log("INSIDE CLUPROMPTTO ASK MIDDLEWARE")
-//             console.log(res)
-//             return res
-//             })
-            
-//         console.log(response)
-//         // Check if the response is ok (status in the range 200-299)
-//         if (!response.ok) {
-//             throw new Error('Network response was not ok');
-//         }
-
-//         // Assuming the server responds with JSON data
-//         const data = await response.json(); // This waits for the stream to be fully read
-
-//         // Log the data and return it
-//         console.log(data);
-//         return data; // Return the parsed data
-//     } catch (e) {
-//         console.error("There was an issue logging feedback: ", e);
-//         // Construct a more informative error object or message as needed
-//         return {
-//             ok: false,
-//             status: 500,
-//             message: "There was an issue logging feedback."
-//         };
-//     }
-// };
-
-// export const cluPromptToAsk = async (question: string): Promise<Response> => {
-//     const response = await fetch("/getCLUResult", {
-//         method: "POST",
-//         body: JSON.stringify({
-//             question: "test"
-//         }),
-//         headers: {
-//             "Content-Type": "application/json"
-//         },
-//     })
-//     .then((res) => {
-//         // debugger
-//         const async = res.body
-//         console.log(async ? async.getReader().read() : 'nothing')
-
-//         console.log('hi')
-//         console.log(res)
-//         return res
-//     })
-//     .catch((err) => {
-//         console.error("There was an issue logging feedback.");
-//         let errRes: Response = {
-//             ...new Response,
-//             ok: false,
-//             status: 500,
-//         }
-//         return errRes;
-//     })
-//     console.log(response)
-//     return response;
-// }

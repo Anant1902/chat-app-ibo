@@ -1109,7 +1109,7 @@ async def get_more_info():
 
             iboqna_confidence_score = orchestration_result["result"]["prediction"]["intents"]["IBOQNA"]["confidenceScore"]
             # Now you can proceed to access the relevant data from iboqna_prediction
-            if iboqna_confidence_score >= 0.5:
+            if iboqna_confidence_score >= 0.6:
                 # If confidence score is above the threshold, use get_chat_completion
                 print(iboqna_confidence_score)
                 final_answer = get_chat_completion(question)
@@ -1120,7 +1120,14 @@ async def get_more_info():
                 if iboluis_prediction:
                     if "result" in iboluis_prediction:
                         top_intent = iboluis_prediction["result"]["prediction"]["topIntent"]
-                        final_answer = top_intent
+                        if top_intent == "ExamSchedule":
+                            final_answer = "While an answer wasn't retrieved, it seems that your question is regarding Examination Schedule. Please remember to provide the IB Programme from the drop down!"
+                        else:    
+                            final_answer = top_intent
+                        
+                        
+                        
+                        
                         print("Final Answer:", final_answer)
                     else:
                         final_answer = "Sorry, QnA could not answer this question!"
