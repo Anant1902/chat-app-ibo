@@ -1067,7 +1067,7 @@ async def get_more_info():
         clu_endpoint = "https://prc-language-testing-eastus2.cognitiveservices.azure.com/"
         clu_key = "630c730db8f44938b047005c6d48fb36"
         project_name = "orchestration4ibodatateam"
-        deployment_name = "deploy1"
+        deployment_name = "deploy2"
         clu_client = ConversationAnalysisClient(clu_endpoint, AzureKeyCredential(clu_key))
 
         # Pass the generated text and prompt to the orchestrator
@@ -1109,7 +1109,7 @@ async def get_more_info():
 
             iboqna_confidence_score = orchestration_result["result"]["prediction"]["intents"]["IBOQNA"]["confidenceScore"]
             # Now you can proceed to access the relevant data from iboqna_prediction
-            if iboqna_confidence_score >= 0.6:
+            if iboqna_confidence_score >= 0.5:
                 # If confidence score is above the threshold, use get_chat_completion
                 print(iboqna_confidence_score)
                 final_answer = get_chat_completion(question)
