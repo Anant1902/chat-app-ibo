@@ -1015,7 +1015,7 @@ dotenv.load_dotenv()
 def get_chat_completion(query):
     endpoint = "https://openai4ibodatateam.openai.azure.com/"
     api_key = "a9e9bcfd54304e4685294177a53cc964"
-    deployment = "gpt4ibodatateam"
+    deployment = "testDeploy"
 
     client = openai.AzureOpenAI(
         base_url=f"{endpoint}/openai/deployments/{deployment}/extensions",
